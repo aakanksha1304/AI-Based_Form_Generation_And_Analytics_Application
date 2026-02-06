@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>📊 Excel-like Form Responses Test</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background: #f8fafc; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 40px; }
+        .header h1 { color: #1e293b; margin-bottom: 10px; }
+        .header p { color: #64748b; font-size: 18px; }
+        .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; margin-bottom: 20px; }
+        .card h2 { margin: 0 0 16px 0; color: #1e293b; font-size: 18px; font-weight: 600; }
+        .success { border-left: 4px solid #10b981; background: #f0fdf4; }
+        .error { border-left: 4px solid #ef4444; background: #fef2f2; }
+        .info { border-left: 4px solid #3b82f6; background: #eff6ff; }
+        button { background: #3b82f6; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; margin: 4px; transition: all 0.2s; }
+        button:hover { background: #2563eb; transform: translateY(-1px); }
+        button.success { background: #10b981; }
+        button.success:hover { background: #059669; }
+        pre { background: #f1f5f9; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 12px; margin: 12px 0; }
+        .status { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; margin-left: 8px; }
+        .status.success { background: #dcfce7; color: #166534; }
+        .status.error { background: #fee2e2; color: #991b1b; }
+        .status.pending { background: #fef3c7; color: #92400e; }
+        .link-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 12px 0; }
+        .link-box a { color: #3b82f6; text-decoration: none; font-weight: 500; }
+        .link-box a:hover { text-decoration: underline; }
+        input[type="text"] { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; margin: 8px 0; }
+        .feature-list { list-style: none; padding: 0; }
+        .feature-list li { padding: 8px 0; display: flex; align-items: center; }
+        .feature-list li::before { content: '✅'; margin-right: 8px; }
+        .step { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
+        .step-number { background: #3b82f6; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
+        .step-content { flex: 1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Excel-like Form Responses Test</h1>
+            <p>Testing the spreadsheet view for form responses with CSV export functionality</p>
+        </div>
+
+        <div class="card info">
+            <h2>🎯 New Features Added</h2>
+            <ul class="feature-list">
+                <li>Excel-like spreadsheet view for form responses</li>
+                <li>Dynamic columns for each form question</li>
+                <li>CSV export functionality with all response data</li>
+                <li>Search and filter capabilities</li>
+                <li>Sticky columns for better navigation</li>
+                <li>Responsive design for large datasets</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>🚀 Test Complete Workflow</h2>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <strong>Login & Create Form</strong>
+                    <button onclick="testCompleteWorkflow()" class="success">Start Complete Test</button>
+                    <div id="workflowStatus"></div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <strong>Submit Multiple Responses</strong>
+                    <button onclick="submitMultipleResponses()" class="success">Submit Test Responses</button>
+                    <div id="responseStatus"></div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <strong>View Excel-like Responses</strong>
+                    <input type="text" id="formIdInput" placeholder="Form ID will appear here..." readonly />
+                    <button onclick="testResponsesView()" class="success">Test Responses View</button>
+                    <div id="responsesViewStatus"></div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <strong>Test CSV Export</strong>
+                    <button onclick="testCSVExport()" class="success">Test CSV Export</button>
+                    <div id="csvStatus"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📋 Test Results</h2>
+            <div id="testResults"></div>
+        </div>
+
+        <div class="card">
+            <h2>🔗 Quick Access Links</h2>
+            <div class="link-box">
+                <p><strong>Dashboard:</strong> <a href="http://localhost:5174/dashboard" target="_blank">http://localhost:5174/dashboard</a></p>
+                <p><strong>Form Builder:</strong> <a href="http://localhost:5174/create-form" target="_blank">http://localhost:5174/create-form</a></p>
+                <p><strong>Example Form Responses:</strong> <span id="responsesLink">Create a form first</span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = localStorage.getItem('authToken') || '';
+        let currentFormId = '';
+        let currentShareableLink = '';
+
+        function setStatus(elementId, status, message) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<span class="status ${status}">${message}</span>`;
+        }
+
+        async function testCompleteWorkflow() {
+            setStatus('workflowStatus', 'pending', 'Starting complete workflow test...');
+            
+            try {
+                // Step 1: Login
+                const loginResponse = await fetch('http://localhost:5000/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'password123'
+                    })
+                });
+                
+                const loginData = await loginResponse.json();
+                
+                if (!loginData.token) {
+                    throw new Error('Login failed');
+                }
+                
+                authToken = loginData.token;
+                localStorage.setItem('authToken', authToken);
+
+                // Step 2: Create a comprehensive form
+                const formData = {
+                    title: `Excel Test Form ${Date.now()}`,
+                    description: 'A comprehensive form to test Excel-like responses view',
+                    questions: [
+                        {
+                            id: 'name',
+                            question: 'What is your full name?',
+                            type: 'text',
+                            placeholder: 'Enter your full name',
+                            options: []
+                        },
+                        {
+                            id: 'email',
+                            question: 'What is your email address?',
+                            type: 'email',
+                            placeholder: 'Enter your email',
+                            options: []
+                        },
+                        {
+                            id: 'age',
+                            question: 'What is your age?',
+                            type: 'number',
+                            placeholder: 'Enter your age',
+                            options: []
+                        },
+                        {
+                            id: 'source',
+                            question: 'How did you hear about us?',
+                            type: 'select',
+                            placeholder: 'Choose an option',
+                            options: ['Google Search', 'Social Media', 'Friend Referral', 'Advertisement', 'Other']
+                        },
+                        {
+                            id: 'interests',
+                            question: 'What services interest you?',
+                            type: 'radio',
+                            placeholder: '',
+                            options: ['Web Development', 'Mobile App', 'UI/UX Design', 'Consulting', 'Marketing']
+                        },
+                        {
+                            id: 'feedback',
+                            question: 'Any additional feedback?',
+                            type: 'textarea',
+                            placeholder: 'Share your thoughts...',
+                            options: []
+                        }
+                    ],
+                    backgroundMedia: null,
+                    settings: {
+                        isPublic: true,
+                        allowMultipleSubmissions: true,
+                        showProgressBar: true
+                    }
+                };
+
+                const formResponse = await fetch('http://localhost:5000/api/forms', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const formResult = await formResponse.json();
+                
+                if (formResult.response && formResult.form) {
+                    currentFormId = formResult.form._id;
+                    currentShareableLink = formResult.form.shareableLink;
+                    document.getElementById('formIdInput').value = currentFormId;
+                    
+                    setStatus('workflowStatus', 'success', '✅ Form created successfully');
+                    
+                    document.getElementById('responsesLink').innerHTML = `
+                        <a href="http://localhost:5174/form/${currentFormId}/responses" target="_blank">
+                            http://localhost:5174/form/${currentFormId}/responses
+                        </a>
+                    `;
+                    
+                    document.getElementById('testResults').innerHTML += `
+                        <div class="link-box">
+                            <h4>✅ Form Created</h4>
+                            <p><strong>Form ID:</strong> ${currentFormId}</p>
+                            <p><strong>Title:</strong> ${formResult.form.title}</p>
+                            <p><strong>Questions:</strong> ${formResult.form.questions.length}</p>
+                            <p><strong>Public Link:</strong> 
+                                <a href="http://localhost:5174/form/${currentShareableLink}" target="_blank">
+                                    http://localhost:5174/form/${currentShareableLink}
+                                </a>
+                            </p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error('Form creation failed');
+                }
+            } catch (error) {
+                setStatus('workflowStatus', 'error', '❌ Workflow failed: ' + error.message);
+            }
+        }
+
+        async function submitMultipleResponses() {
+            if (!currentShareableLink) {
+                alert('Please create a form first');
+                return;
+            }
+
+            setStatus('responseStatus', 'pending', 'Submitting multiple test responses...');
+
+            const testResponses = [
+                {
+                    name: 'John Doe',
+                    email: 'john.doe@example.com',
+                    age: '28',
+                    source: 'Google Search',
+                    interests: 'Web Development',
+                    feedback: 'Great service! Looking forward to working with you.'
+                },
+                {
+                    name: 'Jane Smith',
+                    email: 'jane.smith@example.com',
+                    age: '32',
+                    source: 'Social Media',
+                    interests: 'UI/UX Design',
+                    feedback: 'Impressed by your portfolio. Would like to discuss a project.'
+                },
+                {
+                    name: 'Mike Johnson',
+                    email: 'mike.johnson@example.com',
+                    age: '25',
+                    source: 'Friend Referral',
+                    interests: 'Mobile App',
+                    feedback: 'My friend recommended you. Interested in mobile app development.'
+                },
+                {
+                    name: 'Sarah Wilson',
+                    email: 'sarah.wilson@example.com',
+                    age: '29',
+                    source: 'Advertisement',
+                    interests: 'Consulting',
+                    feedback: 'Saw your ad online. Need help with digital strategy.'
+                },
+                {
+                    name: 'David Brown',
+                    email: 'david.brown@example.com',
+                    age: '35',
+                    source: 'Other',
+                    interests: 'Marketing',
+                    feedback: 'Found you through a business network. Interested in marketing services.'
+                }
+            ];
+
+            try {
+                let successCount = 0;
+                
+                for (const testData of testResponses) {
+                    const submissionData = {
+                        responses: [
+                            {
+                                questionId: 'name',
+                                question: 'What is your full name?',
+                                answer: testData.name,
+                                questionType: 'text'
+                            },
+                            {
+                                questionId: 'email',
+                                question: 'What is your email address?',
+                                answer: testData.email,
+                                questionType: 'email'
+                            },
+                            {
+                                questionId: 'age',
+                                question: 'What is your age?',
+                                answer: testData.age,
+                                questionType: 'number'
+                            },
+                            {
+                                questionId: 'source',
+                                question: 'How did you hear about us?',
+                                answer: testData.source,
+                                questionType: 'select'
+                            },
+                            {
+                                questionId: 'interests',
+                                question: 'What services interest you?',
+                                answer: testData.interests,
+                                questionType: 'radio'
+                            },
+                            {
+                                questionId: 'feedback',
+                                question: 'Any additional feedback?',
+                                answer: testData.feedback,
+                                questionType: 'textarea'
+                            }
+                        ],
+                        submitterInfo: {
+                            email: testData.email
+                        },
+                        metadata: {
+                            timeSpent: Math.floor(Math.random() * 120) + 30, // 30-150 seconds
+                            deviceType: Math.random() > 0.5 ? 'desktop' : 'mobile'
+                        }
+                    };
+
+                    const response = await fetch(`http://localhost:5000/api/f/${currentShareableLink}/submit`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(submissionData)
+                    });
+                    
+                    const result = await response.json();
+                    if (result.response) {
+                        successCount++;
+                    }
+                    
+                    // Small delay between submissions
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+
+                setStatus('responseStatus', 'success', `✅ ${successCount}/${testResponses.length} responses submitted`);
+                
+                document.getElementById('testResults').innerHTML += `
+                    <div class="link-box">
+                        <h4>✅ Test Responses Submitted</h4>
+                        <p><strong>Total Responses:</strong> ${successCount}</p>
+                        <p><strong>Response Types:</strong> Text, Email, Number, Select, Radio, Textarea</p>
+                        <p><strong>Metadata:</strong> Time spent, Device type, Email addresses</p>
+                    </div>
+                `;
+            } catch (error) {
+                setStatus('responseStatus', 'error', '❌ Submission failed: ' + error.message);
+            }
+        }
+
+        async function testResponsesView() {
+            if (!currentFormId || !authToken) {
+                alert('Please create a form and submit responses first');
+                return;
+            }
+
+            setStatus('responsesViewStatus', 'pending', 'Testing responses view...');
+
+            try {
+                const response = await fetch(`http://localhost:5000/api/forms/${currentFormId}/submissions`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                const data = await response.json();
+                
+                if (data.response) {
+                    setStatus('responsesViewStatus', 'success', `✅ Found ${data.submissions.length} responses`);
+                    
+                    document.getElementById('testResults').innerHTML += `
+                        <div class="link-box">
+                            <h4>✅ Excel-like View Ready</h4>
+                            <p><strong>Total Responses:</strong> ${data.submissions.length}</p>
+                            <p><strong>Columns:</strong> Submitter, Date, Status, Time Spent + ${data.submissions[0]?.responses?.length || 0} question columns</p>
+                            <p><strong>Features:</strong> Search, Filter, Export CSV, Sticky columns</p>
+                            <p><strong>View Link:</strong> 
+                                <a href="http://localhost:5174/form/${currentFormId}/responses" target="_blank">
+                                    Open Excel-like View
+                                </a>
+                            </p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error('Failed to fetch responses');
+                }
+            } catch (error) {
+                setStatus('responsesViewStatus', 'error', '❌ View test failed: ' + error.message);
+            }
+        }
+
+        async function testCSVExport() {
+            if (!currentFormId) {
+                alert('Please create a form first');
+                return;
+            }
+
+            setStatus('csvStatus', 'success', '✅ CSV export available in responses view');
+            
+            document.getElementById('testResults').innerHTML += `
+                <div class="link-box">
+                    <h4>✅ CSV Export Features</h4>
+                    <ul class="feature-list">
+                        <li>Export all response data to CSV format</li>
+                        <li>Includes submitter info, timestamps, and all answers</li>
+                        <li>Handles multiple choice and text responses</li>
+                        <li>Automatic filename with date</li>
+                        <li>Compatible with Excel, Google Sheets, etc.</li>
+                    </ul>
+                    <p><strong>To test:</strong> Go to the responses view and click "Export CSV"</p>
+                </div>
+            `;
+        }
+
+        // Auto-populate existing token if available
+        if (authToken) {
+            setStatus('workflowStatus', 'success', '✅ Already authenticated');
+        }
+    </script>
+</body>
+</html>

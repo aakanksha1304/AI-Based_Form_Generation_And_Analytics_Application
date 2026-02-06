@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: artistic-forms-api
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        fromDatabase:
+          name: artistic-forms-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: https://your-app-name.netlify.app
+
+databases:
+  - name: artistic-forms-db
+    databaseName: artisticforms
+    user: artisticforms

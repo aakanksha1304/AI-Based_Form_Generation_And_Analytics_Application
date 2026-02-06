@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complete System Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; font-size: 12px; }
+        .link-box { background: #f8f9fa; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .copy-btn { background: #28a745; font-size: 12px; padding: 5px 10px; }
+    </style>
+</head>
+<body>
+    <h1>🚀 Artistic Forms - Complete System Test</h1>
+    
+    <div class="section info">
+        <h2>📋 Test Checklist</h2>
+        <p>This will test the complete form lifecycle:</p>
+        <ol>
+            <li>✅ User Authentication (Login/Register)</li>
+            <li>✅ Form Creation & Publishing</li>
+            <li>✅ Dashboard Analytics</li>
+            <li>✅ Public Form Access</li>
+            <li>✅ Form Submission</li>
+            <li>✅ Real-time Analytics Update</li>
+        </ol>
+    </div>
+    
+    <div class="section">
+        <h2>1. 🔐 Authentication Test</h2>
+        <button onclick="testRegister()">Register New User</button>
+        <button onclick="testLogin()">Login Existing User</button>
+        <div id="authResult"></div>
+    </div>
+    
+    <div class="section">
+        <h2>2. 📝 Form Creation Test</h2>
+        <button onclick="testCreateForm()">Create Test Form</button>
+        <div id="formResult"></div>
+        <div id="formLinks"></div>
+    </div>
+    
+    <div class="section">
+        <h2>3. 📊 Dashboard Test</h2>
+        <button onclick="testDashboard()">Get Dashboard Data</button>
+        <button onclick="testUserForms()">Get User Forms</button>
+        <div id="dashboardResult"></div>
+    </div>
+    
+    <div class="section">
+        <h2>4. 🌐 Public Form Test</h2>
+        <input type="text" id="shareableLink" placeholder="Shareable link will appear here" style="width: 300px; padding: 8px;" readonly />
+        <button onclick="testPublicForm()">Test Public Access</button>
+        <button onclick="testFormSubmission()">Submit Test Response</button>
+        <div id="publicResult"></div>
+    </div>
+    
+    <div class="section">
+        <h2>5. 📈 Analytics Update Test</h2>
+        <button onclick="testAnalyticsUpdate()">Check Updated Analytics</button>
+        <div id="analyticsResult"></div>
+    </div>
+
+    <script>
+        let authToken = localStorage.getItem('authToken') || '';
+        let currentFormId = '';
+        let currentShareableLink = '';
+
+        async function testRegister() {
+            const timestamp = Date.now();
+            try {
+                const response = await fetch('http://localhost:5000/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: `Test User ${timestamp}`,
+                        email: `test${timestamp}@example.com`,
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('authResult').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                if (data.token) {
+                    authToken = data.token;
+                    localStorage.setItem('authToken', authToken);
+                    document.getElementById('authResult').className = 'section success';
+                    document.getElementById('authResult').innerHTML += '<p><strong>✅ Registration successful!</strong></p>';
+                } else {
+                    document.getElementById('authResult').className = 'section error';
+                }
+            } catch (error) {
+                document.getElementById('authResult').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                document.getElementById('authResult').className = 'section error';
+            }
+        }
+
+        async function testLogin() {
+            try {
+                const response = await fetch('http://localhost:5000/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('authResult').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                if (data.token) {
+                    authToken = data.token;
+                    localStorage.setItem('authToken', authToken);
+                    document.getElementById('authResult').className = 'section success';
+                    document.getElementById('authResult').innerHTML += '<p><strong>✅ Login successful!</strong></p>';
+                } else {
+                    document.getElementById('authResult').className = 'section error';
+                }
+            } catch (error) {
+                document.getElementById('authResult').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                document.getElementById('authResult').className = 'section error';
+            }
+        }
+
+        async function testCreateForm() {
+            if (!authToken) {
+                alert('Please login first');
+                return;
+            }
+
+            try {
+                const formData = {
+                    title: `Test Form ${Date.now()}`,
+                    description: 'A comprehensive test form with multiple question types',
+                    questions: [
+                        {
+                            id: 'q1',
+                            question: 'What is your full name?',
+                            type: 'text',
+                            placeholder: 'Enter your full name',
+                            options: []
+                        },
+                        {
+                            id: 'q2',
+                            question: 'What is your email address?',
+                            type: 'email',
+                            placeholder: 'Enter your email',
+                            options: []
+                        },
+                        {
+                            id: 'q3',
+                            question: 'How did you hear about us?',
+                            type: 'select',
+                            placeholder: 'Choose an option',
+                            options: ['Google Search', 'Social Media', 'Friend Referral', 'Advertisement', 'Other']
+                        },
+                        {
+                            id: 'q4',
+                            question: 'What services are you interested in?',
+                            type: 'radio',
+                            placeholder: '',
+                            options: ['Web Development', 'Mobile App', 'UI/UX Design', 'Consulting', 'Other']
+                        }
+                    ],
+                    backgroundMedia: null,
+                    settings: {
+                        isPublic: true,
+                        allowMultipleSubmissions: true,
+                        showProgressBar: true
+                    }
+                };
+
+                const response = await fetch('http://localhost:5000/api/forms', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                document.getElementById('formResult').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                if (data.response && data.form) {
+                    currentFormId = data.form._id;
+                    currentShareableLink = data.form.shareableLink;
+                    document.getElementById('shareableLink').value = currentShareableLink;
+                    
+                    document.getElementById('formResult').className = 'section success';
+                    document.getElementById('formLinks').innerHTML = `
+                        <div class="link-box">
+                            <h4>🎉 Form Created Successfully!</h4>
+                            <p><strong>Form ID:</strong> ${currentFormId}</p>
+                            <p><strong>Shareable Link:</strong> 
+                                <a href="http://localhost:5174/form/${currentShareableLink}" target="_blank">
+                                    http://localhost:5174/form/${currentShareableLink}
+                                </a>
+                                <button class="copy-btn" onclick="copyToClipboard('http://localhost:5174/form/${currentShareableLink}')">Copy</button>
+                            </p>
+                            <p><strong>Admin Dashboard:</strong> 
+                                <a href="http://localhost:5174/dashboard" target="_blank">
+                                    http://localhost:5174/dashboard
+                                </a>
+                            </p>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('formResult').className = 'section error';
+                }
+            } catch (error) {
+                document.getElementById('formResult').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                document.getElementById('formResult').className = 'section error';
+            }
+        }
+
+        async function testDashboard() {
+            if (!authToken) {
+                alert('Please login first');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5000/api/dashboard/analytics', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                const data = await response.json();
+                document.getElementById('dashboardResult').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                if (data.response) {
+                    document.getElementById('dashboardResult').className = 'section success';
+                    document.getElementById('dashboardResult').innerHTML += `
+                        <div class="link-box">
+                            <h4>📊 Dashboard Analytics</h4>
+                            <p><strong>Total Forms:</strong> ${data.analytics.totalForms}</p>
+                            <p><strong>Total Views:</strong> ${data.analytics.totalViews}</p>
+                            <p><strong>Total Submissions:</strong> ${data.analytics.totalSubmissions}</p>
+                            <p><strong>Avg Completion Rate:</strong> ${Math.round(data.analytics.averageCompletionRate)}%</p>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('dashboardResult').className = 'section error';
+                }
+            } catch (error) {
+                document.getElementById('dashboardResult').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                document.getElementById('dashboardResult').className = 'section error';
+            }
+        }
+
+        async function testUserForms() {
+            if (!authToken) {
+                alert('Please login first');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5000/api/forms', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                const data = await response.json();
+                document.getElementById('dashboardResult').innerHTML += `<h4>📝 User Forms:</h4><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('dashboardResult').innerHTML += `<div class="error">❌ Error fetching forms: ${error.message}</div>`;
+            }
+        }
+
+        async function testPublicForm() {
+            const shareableLink = document.getElementById('shareableLink').value || currentShareableLink;
+            if (!shareableLink) {
+                alert('Please create a form first or enter a shareable link');
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:5000/api/f/${shareableLink}`);
+                const data = await response.json();
+                document.getElementById('publicResult').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                if (data.response) {
+                    document.getElementById('publicResult').className = 'section success';
+                    document.getElementById('publicResult').innerHTML += '<p><strong>✅ Public form access successful!</strong></p>';
+                } else {
+                    document.getElementById('publicResult').className = 'section error';
+                }
+            } catch (error) {
+                document.getElementById('publicResult').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                document.getElementById('publicResult').className = 'section error';
+            }
+        }
+
+        async function testFormSubmission() {
+            const shareableLink = document.getElementById('shareableLink').value || currentShareableLink;
+            if (!shareableLink) {
+                alert('Please create a form first or enter a shareable link');
+                return;
+            }
+
+            try {
+                const submissionData = {
+                    responses: [
+                        {
+                            questionId: 'q1',
+                            question: 'What is your full name?',
+                            answer: 'John Doe Test',
+                            questionType: 'text'
+                        },
+                        {
+                            questionId: 'q2',
+                            question: 'What is your email address?',
+                            answer: 'john.doe.test@example.com',
+                            questionType: 'email'
+                        },
+                        {
+                            questionId: 'q3',
+                            question: 'How did you hear about us?',
+                            answer: 'Google Search',
+                            questionType: 'select'
+                        },
+                        {
+                            questionId: 'q4',
+                            question: 'What services are you interested in?',
+                            answer: 'Web Development',
+                            questionType: 'radio'
+                        }
+                    ],
+                    submitterInfo: {
+                        email: 'john.doe.test@example.com'
+                    },
+                    metadata: {
+                        timeSpent: 45,
+                        deviceType: 'desktop'
+                    }
+                };
+
+                const response = await fetch(`http://localhost:5000/api/f/${shareableLink}/submit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(submissionData)
+                });
+                
+                const data = await response.json();
+                document.getElementById('publicResult').innerHTML += `<h4>📝 Form Submission:</h4><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                if (data.response) {
+                    document.getElementById('publicResult').innerHTML += '<p><strong>✅ Form submission successful!</strong></p>';
+                }
+            } catch (error) {
+                document.getElementById('publicResult').innerHTML += `<div class="error">❌ Submission Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testAnalyticsUpdate() {
+            if (!authToken) {
+                alert('Please login first');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5000/api/dashboard/analytics', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                const data = await response.json();
+                document.getElementById('analyticsResult').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                if (data.response) {
+                    document.getElementById('analyticsResult').className = 'section success';
+                    document.getElementById('analyticsResult').innerHTML += `
+                        <div class="link-box">
+                            <h4>📈 Updated Analytics</h4>
+                            <p><strong>Total Forms:</strong> ${data.analytics.totalForms}</p>
+                            <p><strong>Total Views:</strong> ${data.analytics.totalViews}</p>
+                            <p><strong>Total Submissions:</strong> ${data.analytics.totalSubmissions}</p>
+                            <p><strong>Recent Submissions:</strong> ${data.analytics.recentSubmissions.length}</p>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('analyticsResult').className = 'section error';
+                }
+            } catch (error) {
+                document.getElementById('analyticsResult').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                document.getElementById('analyticsResult').className = 'section error';
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Link copied to clipboard!');
+            });
+        }
+
+        // Auto-populate existing token if available
+        if (authToken) {
+            document.getElementById('authResult').innerHTML = '<p class="info">✅ Already logged in with existing token</p>';
+            document.getElementById('authResult').className = 'section info';
+        }
+    </script>
+</body>
+</html>
